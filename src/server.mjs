@@ -53,7 +53,7 @@ export default class Server {
     this.app.use(express.static("public"));
 
     this.app.listen(this.port, () => {
-      console.log("App is listening on port 3000!");
+      console.log(`App is listening on port ${this.port}!`);
     });
   }
 }
