@@ -10,9 +10,9 @@ You have different possibilities:
 
 1. Use the prebuilt Docker image [`sibbl/blinkist-podcast-server`](https://hub.docker.com/r/sibbl/blinkist-podcast-server)
 
-   1.1. Either run it manually like `docker run -d -p 8080:8080 -v ./data:/usr/src/app/data sibbl/blinkist-podcast-server`
+   1. Either run it manually like `docker run -d -p 8080:8080 -v ./data:/usr/src/app/data sibbl/blinkist-podcast-server`
 
-   1.1. Or use the `docker-compose.yml` file of this repo and run `docker-compose up`
+   1. Or use the `docker-compose.yml` file of this repo and run `docker-compose up`
 
 1. Or download the source and run `npm ci` and then `npm start` (requires Node.js 14 or newer)
 
