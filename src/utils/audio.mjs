@@ -1,12 +1,21 @@
 import ffmpeg from "fluent-ffmpeg";
-import ffprobeLib from "ffprobe-static";
-import ffmpegPath from "ffmpeg-static";
 import { getChapterAudioFilePath, getBookCoverFilePath } from "./storage.mjs";
 import path from "path";
 import fs from "fs";
 
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobeLib.path);
+try {
+  const ffmpegPath = require("ffmpeg-static");
+  ffmpeg.setFfmpegPath(ffmpegPath);
+} catch {
+  // noop
+}
+
+try {
+  const ffprobeLib = require("ffprobe-static");
+  ffmpeg.setFfprobePath(ffprobeLib.path);
+} catch {
+  // noop
+}
 
 export function getAudioLengthAsync(filePath) {
   return new Promise((resolve, reject) => {
