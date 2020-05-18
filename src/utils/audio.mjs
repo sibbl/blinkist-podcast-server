@@ -1,24 +1,27 @@
 import ffmpeg from "fluent-ffmpeg";
-import { getChapterAudioFilePath, getBookCoverFilePath } from "./storage.mjs";
+import { getChapterAudioFilePath, getBookCoverFilePath } from "./paths.mjs";
 import path from "path";
 import fs from "fs";
 
-try {
-  const ffmpegPath = require("ffmpeg-static");
-  ffmpeg.setFfmpegPath(ffmpegPath);
-} catch {
-  // noop
+async function trySetFfmpegPathsAsync() {
+  try {
+    const ffmpegStatic = await import("ffmpeg-static");
+    ffmpeg.setFfmpegPath(ffmpegStatic.default);
+  } catch (e) {
+    // noop, use local ffmpeg
+  }
+
+  try {
+    const ffprobeLib = await import("ffprobe-static");
+    ffmpeg.setFfprobePath(ffprobeLib.default.path);
+  } catch (e) {
+    // noop, use local ffprobe
+  }
 }
 
-try {
-  const ffprobeLib = require("ffprobe-static");
-  ffmpeg.setFfprobePath(ffprobeLib.path);
-} catch {
-  // noop
-}
-
-export function getAudioLengthAsync(filePath) {
-  return new Promise((resolve, reject) => {
+export async function getAudioLengthAsync(filePath) {
+  await trySetFfmpegPathsAsync();
+  return await new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, function (err, metadata) {
       if (err) {
         return reject(err);
@@ -45,6 +48,7 @@ export async function getChaptersWithAudioLengthsAsync(book) {
 }
 
 export async function concatAudioFilesAsync(book, outFilePath) {
+  await trySetFfmpegPathsAsync();
   const chapterFilePaths = await Promise.all(
     book.chapters.map((chapter) => {
       return getChapterAudioFilePath(book.id, chapter.id);
@@ -78,6 +82,7 @@ export async function concatAudioFilesAsync(book, outFilePath) {
 }
 
 export async function enrichAudioAsync(inFilePath, book, outFilePath) {
+  await trySetFfmpegPathsAsync();
   const chapterMarksFilePath = path.join(process.cwd(), `temp_${book.id}.txt`);
   const chaptersWithLengths = await getChaptersWithAudioLengthsAsync(book);
   const coverFilePath = await getBookCoverFilePath(book.id);

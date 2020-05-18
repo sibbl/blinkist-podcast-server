@@ -1,11 +1,11 @@
 import express from "express";
+import { createFeedAsync } from "./utils/feed.mjs";
 import {
-  createFeedAsync,
-  doesBookExist,
-  getBookAudioData,
-  getBookDetails,
-  getBookCover,
-} from "./utils/index.mjs";
+  doesBookExistAsync,
+  getBookAudioDataAsync,
+  getBookDetailsAsync,
+  getBookCoverAsync,
+} from "./utils/storage.mjs";
 
 export default class Server {
   constructor({ port, languages }) {
@@ -16,8 +16,8 @@ export default class Server {
   run() {
     this.app = express();
 
-    this.app.set('trust proxy', 'loopback');
-    this.app.enable('trust proxy');
+    this.app.set("trust proxy", "loopback");
+    this.app.enable("trust proxy");
 
     this.app.get("/feed/:language", async (req, res) => {
       const language = req.params.language;
@@ -31,24 +31,24 @@ export default class Server {
 
     this.app.get("/book/:bookId/audio", async (req, res) => {
       const bookId = req.params.bookId;
-      const isBookAvailable = await doesBookExist(bookId);
+      const isBookAvailable = await doesBookExistAsync(bookId);
       if (!isBookAvailable) {
         return res.status(400).send("Book not found");
       }
-      const book = await getBookDetails(bookId);
-      const audioData = await getBookAudioData(book);
+      const book = await getBookDetailsAsync(bookId);
+      const audioData = await getBookAudioDataAsync(book);
       res.set("Content-Type", "audio/m4a");
       res.send(audioData);
     });
 
     this.app.get("/book/:bookId/cover", async (req, res) => {
       const bookId = req.params.bookId;
-      const isBookAvailable = await doesBookExist(bookId);
+      const isBookAvailable = await doesBookExistAsync(bookId);
       if (!isBookAvailable) {
         return res.status(400).send("Book not found");
       }
-      const book = await getBookDetails(bookId);
-      const coverData = await getBookCover(book);
+      const book = await getBookDetailsAsync(bookId);
+      const coverData = await getBookCoverAsync(book);
       res.set("Content-Type", "image/jpeg");
       res.send(coverData);
     });

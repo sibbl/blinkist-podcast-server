@@ -1,4 +1,4 @@
-import { scrapeDailyBlink } from "./blinkist/downloader.mjs";
+import { scrapeDailyBlinkAsync } from "./utils/downloader.mjs";
 import cron from "cron";
 
 export default class Scraper {
@@ -16,7 +16,7 @@ export default class Scraper {
 
   async run() {
     await Promise.all(
-      this.languages.map((language) => scrapeDailyBlink(language))
+      this.languages.map((language) => scrapeDailyBlinkAsync(language))
     );
   }
 }

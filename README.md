@@ -15,7 +15,7 @@ You have different possibilities:
 
    1.1. Or use the `docker-compose.yml` file of this repo and run `docker-compose up`
 
-1. Or download the source and run `npm ci` and then `npm start`.
+1. Or download the source and run `npm ci` and then `npm start` (requires Node.js 14 or newer)
 
 By default, this will start the server on port 8080. You can then add the following feed URLs to your Podcatcher:
 

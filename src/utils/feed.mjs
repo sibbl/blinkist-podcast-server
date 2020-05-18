@@ -1,11 +1,12 @@
 import RSS from "rss";
 import {
-  getBookDetails,
-  getBookListEntries,
-  getBookDownloadDate,
-  getBookListLastModifiedDate,
-  getBookAudioFinalFilePath,
+  getBookDetailsAsync,
+  getBookListEntriesAsync,
+  getBookDownloadDateAsync,
+  getBookListLastModifiedDateAsync,
 } from "./storage.mjs";
+
+import { getBookAudioFinalFilePath } from "./paths.mjs";
 
 import {
   getAudioLengthAsync,
@@ -17,14 +18,14 @@ import { getAbsoluteUrl } from "./url.mjs";
 export async function createFeedAsync(reqOrBaseUrl, language) {
   const feed = await createFeedBase(reqOrBaseUrl, language);
 
-  const ids = await getBookListEntries(language);
-  const books = await Promise.all(ids.map((id) => getBookDetails(id)));
+  const ids = await getBookListEntriesAsync(language);
+  const books = await Promise.all(ids.map((id) => getBookDetailsAsync(id)));
 
   for (let book of books) {
     const url = getAbsoluteUrl(reqOrBaseUrl, `/book/${book.id}/audio`);
-    const filePath = await getBookAudioFinalFilePath(book.id);
+    const filePath = getBookAudioFinalFilePath(book.id);
     const duration = await getAudioLengthAsync(filePath);
-    const pubDate = await getBookDownloadDate(book.id);
+    const pubDate = await getBookDownloadDateAsync(book.id);
     const imageUrl = getAbsoluteUrl(reqOrBaseUrl, `/book/${book.id}/cover`);
     const pubDateStr = jsDateToPubDateString(pubDate);
     const chapterList = await getChapterListHtmlAsync(book);
@@ -64,7 +65,7 @@ export async function createFeedAsync(reqOrBaseUrl, language) {
 }
 
 async function createFeedBase(reqOrBaseUrl, language) {
-  const pubDate = await getBookListLastModifiedDate(language);
+  const pubDate = await getBookListLastModifiedDateAsync(language);
   const pubDateStr = jsDateToPubDateString(pubDate);
   const feedImg = getAbsoluteUrl(reqOrBaseUrl, `/assets/cover-${language}.jpg`);
   return new RSS({

@@ -1,22 +1,23 @@
 import axios from "axios";
 import cheerio from "cheerio";
 import {
-  doesBookExist,
-  saveChapterAudioFile,
-  saveBookDetails,
-  appendBookToBookList,
-  getBookDetails,
   getBookAudioRawFilePath,
   getBookAudioFinalFilePath,
-  concatAudioFilesAsync,
-  enrichAudioAsync,
-  saveBookCover,
-} from "../utils/index.mjs";
+} from "./paths.mjs";
+import {
+  doesBookExistAsync,
+  saveChapterAudioFileAsync,
+  saveBookDetailsAsync,
+  appendBookToBookListAsync,
+  getBookDetailsAsync,
+  saveBookCoverAsync,
+} from "./storage.mjs";
+import { concatAudioFilesAsync, enrichAudioAsync } from "./audio.mjs";
 
 const BASE_URL = "https://www.blinkist.com";
 
-export async function scrapeDailyBlink(language) {
-  console.log("Starting", language);
+export async function scrapeDailyBlinkAsync(language) {
+  console.log("Start scraping", language);
 
   const overviewUrl = `${BASE_URL}/${language}/nc/daily/`;
   const bookUrl = await getBookUrl(overviewUrl);
@@ -25,9 +26,14 @@ export async function scrapeDailyBlink(language) {
 
   const bookId = await retrieveBookId(BASE_URL + bookUrl);
 
-  if (await doesBookExist(bookId)) {
-    const existingBook = await getBookDetails(bookId);
-    console.log("Book already exists", language, bookId, existingBook.title);
+  if (await doesBookExistAsync(bookId)) {
+    const existingBook = await getBookDetailsAsync(bookId);
+    console.log(
+      "Skipping because book already exists",
+      language,
+      bookId,
+      existingBook.title
+    );
     return;
   }
 
@@ -47,9 +53,7 @@ export async function scrapeDailyBlink(language) {
   const concatAudioFilePath = getBookAudioRawFilePath(bookDetails.id);
   await concatAudioFilesAsync(bookDetails, concatAudioFilePath);
 
-  const enrichedAudioFilePath = getBookAudioFinalFilePath(
-    bookDetails.id
-  );
+  const enrichedAudioFilePath = getBookAudioFinalFilePath(bookDetails.id);
 
   console.log(
     "Adding chapter marks...",
@@ -63,10 +67,10 @@ export async function scrapeDailyBlink(language) {
     enrichedAudioFilePath
   );
 
-  await appendBookToBookList(bookDetails, language);
-  await saveBookDetails(bookDetails);
+  await appendBookToBookListAsync(bookDetails, language);
+  await saveBookDetailsAsync(bookDetails);
 
-  console.log("Finished...", bookDetails.id, bookDetails.title);
+  console.log("Finished scraping", language, bookDetails.id, bookDetails.title);
 }
 
 async function getBookUrl(url) {
@@ -102,7 +106,7 @@ function retrieveAndSaveAudioFiles(book) {
         responseType: "arraybuffer",
       });
 
-      return await saveChapterAudioFile(book.id, id, audioData);
+      return await saveChapterAudioFileAsync(book.id, id, audioData);
     })
   );
 }
@@ -121,5 +125,5 @@ async function retrieveAndSaveCover(book) {
   const { data } = await axios.get(url, {
     responseType: "arraybuffer",
   });
-  await saveBookCover(book, data);
+  await saveBookCoverAsync(book, data);
 }
