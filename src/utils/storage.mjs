@@ -75,11 +75,14 @@ export async function appendBookToBookList(book, language) {
   await prependFileAsync(filePath, book.id + "\r\n");
 }
 
-export async function getBookListEntries(language, limit = null) {
+export async function getBookListEntries(language, maxEntries = null) {
   const filePath = getBookListFilePath(language);
-  if (!fileExists(filePath)) {
+
+  const exists = await fileExists(filePath);
+  if (!exists) {
     return [];
   }
+
   return await new Promise((resolve, reject) => {
     const lineReader = readline.createInterface({
       input: fs.createReadStream(filePath),
@@ -89,7 +92,7 @@ export async function getBookListEntries(language, limit = null) {
     lineReader.on("line", (line) => {
       lineCounter++;
       result.push(line);
-      if (limit != null && lineCounter == limit) {
+      if (maxEntries != null && lineCounter == maxEntries) {
         lineReader.close();
       }
     });
