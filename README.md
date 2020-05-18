@@ -1,9 +1,8 @@
-# (Unofficial) Blinkist Free Daily Blinks podcast server
+# Blinkist Free Daily Blinks podcast server (unofficial)
 
-This application makes the free daily blinks available to you in a Podcast feed.
-You can add this to the Podcatcher of your choice.
+This application makes the free daily blinks available accessible via a Podcast feed. You can add the feeds to the Podcatcher of your choice.
 
-**Please consider paying for the wonderful service of Blinkist** if you like their content and consume the daily blinks using this tool ❤
+**Please consider paying for Blinkist** if you like their content and consume the daily blinks using this tool ❤
 
 ## Usage
 
@@ -26,10 +25,12 @@ By default, this will start the server on port 8080. You can then add the follow
 
 ## Features
 
-- Every 15 minutes, the daily blink websites are scraped.
-- If no already done, it downloads book meta data as well as the audio binaries.
-- The audio binaries of book chapters are concatenated, converted to AAC and enriched with chapter marks as well as a cover image using ffmpeg.
+- Every 15 minutes, the daily blink websites are checked for a new blink.
+
+- If not already done, it downloads book meta data and the chapter's audio binaries.
+
+- The audio binaries are concatenated, converted to AAC and enriched with chapter marks as well as a cover image using ffmpeg.
 
 ## Remarks
 
-Please note that the usage might be illegal as you scrape data which is not yours! I'm not affiliated with any of the sites scraped or tools used here and everything you do with it is on your own risk. Again, please use this reponsibly and pay for Blinkist if you like their service!
+Please note that the usage might be illegal as you scrape data which is not yours! I'm not affiliated with any of the sites scraped or tools used here and everything you do with it is on your own risk. Again, please use this reponsibly and pay for Blinkist if you like their service ❤ thanks!
