@@ -1,5 +1,5 @@
 export default {
   languages: ["de", "en"],
-  scraperCron: "*/5 * * * *",
+  scraperCron: "*/15 * * * *",
   port: 8080
 };
