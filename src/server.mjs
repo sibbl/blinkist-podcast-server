@@ -16,6 +16,9 @@ export default class Server {
   run() {
     this.app = express();
 
+    this.app.set('trust proxy', 'loopback');
+    this.app.enable('trust proxy');
+
     this.app.get("/feed/:language", async (req, res) => {
       const language = req.params.language;
       if (this.languages.indexOf(language) < 0) {
