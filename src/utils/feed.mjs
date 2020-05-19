@@ -27,15 +27,14 @@ export async function createFeedAsync(reqOrBaseUrl, language) {
     const duration = await getAudioLengthAsync(filePath);
     const pubDate = await getBookDownloadDateAsync(book.id);
     const imageUrl = getAbsoluteUrl(reqOrBaseUrl, `/book/${book.id}/cover`);
-    const pubDateStr = jsDateToPubDateString(pubDate);
-    const chapterList = await getChapterListHtmlAsync(book);
+    const showNotes = await getShowNotesAsync(book);
     feed.item({
       title: book.title,
       description: book.about_the_book,
       url,
       guid: book.id,
       author: book.author,
-      date: pubDateStr,
+      date: pubDate,
       enclosure: { url, file: filePath },
       image: {
         url: imageUrl,
@@ -54,7 +53,7 @@ export async function createFeedAsync(reqOrBaseUrl, language) {
         { "itunes:duration": duration },
         {
           "content:encoded": {
-            _cdata: `${book.about_the_book} ${chapterList}`,
+            _cdata: showNotes,
           },
         },
       ],
@@ -66,7 +65,6 @@ export async function createFeedAsync(reqOrBaseUrl, language) {
 
 async function createFeedBase(reqOrBaseUrl, language) {
   const pubDate = await getBookListLastModifiedDateAsync(language);
-  const pubDateStr = jsDateToPubDateString(pubDate);
   const feedImg = getAbsoluteUrl(reqOrBaseUrl, `/assets/cover-${language}.jpg`);
   return new RSS({
     title: `Daily Blinks ${language.toUpperCase()}`,
@@ -76,7 +74,7 @@ async function createFeedBase(reqOrBaseUrl, language) {
     generator: "Daily Blinks Podcast",
     image_url: feedImg,
     language: language,
-    pubDate: pubDateStr,
+    pubDate: pubDate,
     ttl: 5,
     custom_namespaces: {
       itunes: "http://www.itunes.com/dtds/podcast-1.0.dtd",
@@ -96,9 +94,16 @@ async function createFeedBase(reqOrBaseUrl, language) {
   });
 }
 
+async function getShowNotesAsync(book) {
+  const chapterList = await getChapterListHtmlAsync(book);
+  const title = `<p><strong>${book.title}</strong> - ${book.author}<br/><small>${book.subtitle}</small></p>`;
+  const readLink = `<p><a href="https://www.blinkist.com/books/${book.slug}">👉 Blinkist.com</a></p>`;
+  return [title, book.about_the_book, chapterList, readLink].join("");
+}
+
 async function getChapterListHtmlAsync(book) {
   const chapters = await getChaptersWithAudioLengthsAsync(book);
-  let itemHtml = "",
+  let items = [],
     totalSec = 0;
 
   for (let chapter of chapters) {
@@ -106,32 +111,13 @@ async function getChapterListHtmlAsync(book) {
     var min = Math.floor(totalSec / 60);
     var sec = Math.floor(totalSec % 60);
 
-    totalSec += length;
+    const minStr = (min < 10 ? "0" : "") + min;
+    const secStr = (sec < 10 ? "0" : "") + sec;
 
-    itemHtml += `<li>${min < 10 ? "0" : ""}${min}:${
-      sec < 10 ? "0" : ""
-    }${sec} | ${chapter.title}</li>`;
+    items.push(`${minStr}:${secStr} | ${chapter.title}`);
+
+    totalSec += length;
   }
 
-  return `<ul>${itemHtml}</ul>`;
-}
-
-function jsDateToPubDateString(date) {
-  var months = Array(
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  );
-  return (
-    date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear()
-  );
+  return `<p>${items.join("<br />")}</p>`;
 }
