@@ -4,6 +4,7 @@ import prependFile from "prepend-file";
 import readline from "readline";
 
 import {
+  getDataRootDir,
   getBookListFilePath,
   getBookDirectory,
   getBookDataPath,
@@ -49,7 +50,7 @@ export async function getBookDetailsAsync(bookId) {
 }
 
 export async function appendBookToBookListAsync(book, language) {
-  await fs.promises.mkdir(DATA_DIR, { recursive: true });
+  await fs.promises.mkdir(getDataRootDir(), { recursive: true });
   const filePath = getBookListFilePath(language);
   await prependFileAsync(filePath, book.id + "\r\n");
 }

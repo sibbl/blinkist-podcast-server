@@ -2,6 +2,10 @@ import path from "path";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
+export function getDataRootDir() {
+  return DATA_DIR;
+}
+
 export function getBookListFilePath(language) {
   return path.join(DATA_DIR, `list_${language}.txt`);
 }
