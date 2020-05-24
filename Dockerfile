@@ -1,5 +1,6 @@
+FROM mwader/static-ffmpeg:4.2.2 AS ffmpeg-binaries
 FROM node:14-alpine
-COPY --from=mwader/static-ffmpeg:4.2.2 /ffmpeg /ffprobe /usr/local/bin/
+COPY --from=ffmpeg-binaries /ffmpeg /ffprobe /usr/local/bin/
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm ci --only=production
