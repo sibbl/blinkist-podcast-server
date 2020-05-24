@@ -1,5 +1,7 @@
 # Blinkist Free Daily Blinks podcast server (unofficial)
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/25f52aade8024dc69023ec13c7c2c792)](https://app.codacy.com/manual/sibbl/blinkist-podcast-server?utm_source=github.com&utm_medium=referral&utm_content=sibbl/blinkist-podcast-server&utm_campaign=Badge_Grade_Dashboard)
+
 This application makes the free daily blinks available accessible via a Podcast feed. You can add the feeds to the Podcatcher of your choice.
 
 **Please consider paying for Blinkist** if you like their content and consume the daily blinks using this tool ❤
