@@ -1,5 +1,8 @@
 # Blinkist Free Daily Blinks podcast server (unofficial)
 
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/sibbl/blinkist-podcast-server)](https://hub.docker.com/repository/docker/sibbl/blinkist-podcast-server)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/93fd93531a47488dbf9bf3adfcf20f58)](https://www.codacy.com/manual/sibbl/blinkist-podcast-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=sibbl/blinkist-podcast-server&amp;utm_campaign=Badge_Grade)
+
 This application makes the free daily blinks available accessible via a Podcast feed. You can add the feeds to the Podcatcher of your choice.
 
 **Please consider paying for Blinkist** if you like their content and consume the daily blinks using this tool ❤
@@ -10,11 +13,11 @@ You have different possibilities:
 
 1. Use the prebuilt Docker image [`sibbl/blinkist-podcast-server`](https://hub.docker.com/r/sibbl/blinkist-podcast-server)
 
-   1. Either run it manually like `docker run -d -p 8080:8080 -v ./data:/usr/src/app/data sibbl/blinkist-podcast-server`
+    1. Either run it manually like `docker run -d -p 8080:8080 -v ./data:/usr/src/app/data sibbl/blinkist-podcast-server`
 
-   1. Or use the `docker-compose.yml` file of this repo and run `docker-compose up`
+    2. Or use the `docker-compose.yml` file of this repo and run `docker-compose up`
 
-1. Or download the source and run `npm ci` and then `npm start` (requires Node.js 14 or newer)
+2. Or download the source and run `npm ci` and then `npm start` (requires Node.js 14 or newer)
 
 By default, this will start the server on port 8080. You can then add the following feed URLs to your Podcatcher:
 
@@ -25,11 +28,11 @@ By default, this will start the server on port 8080. You can then add the follow
 
 ## Features
 
-- Every 15 minutes, the daily blink websites are checked for a new blink.
+* Every 15 minutes, the daily blink websites are checked for a new blink.
 
-- If not already done, it downloads book meta data and the chapter's audio binaries.
+* If not already done, it downloads book meta data and the chapter's audio binaries.
 
-- The audio binaries are concatenated, converted to AAC and enriched with chapter marks as well as a cover image using ffmpeg.
+* The audio binaries are concatenated, converted to AAC and enriched with chapter marks as well as a cover image using ffmpeg.
 
 ## Remarks
 
