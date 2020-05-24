@@ -1,7 +1,7 @@
 # Blinkist Free Daily Blinks podcast server (unofficial)
 
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/sibbl/blinkist-podcast-server)](https://hub.docker.com/repository/docker/sibbl/blinkist-podcast-server)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/93fd93531a47488dbf9bf3adfcf20f58)](https://www.codacy.com/manual/sibbl/blinkist-podcast-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=sibbl/blinkist-podcast-server&amp;utm_campaign=Badge_Grade)
+[![CodeFactor](https://www.codefactor.io/repository/github/sibbl/blinkist-podcast-server/badge)](https://www.codefactor.io/repository/github/sibbl/blinkist-podcast-server)
 
 This application makes the free daily blinks available accessible via a Podcast feed. You can add the feeds to the Podcatcher of your choice.
 
