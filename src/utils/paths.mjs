@@ -18,6 +18,10 @@ export function getBookDataPath(bookId) {
   return path.join(getBookDirectory(bookId), "data.json");
 }
 
+export function getBookRssCachePath(bookId) {
+  return path.join(getBookDirectory(bookId), "rss-cache.json");
+}
+
 export function getChapterAudioFilePath(bookId, chapterId) {
   return path.join(DATA_DIR, bookId, chapterId);
 }

@@ -13,6 +13,7 @@ import {
   saveBookCoverAsync,
 } from "./storage.mjs";
 import { concatAudioFilesAsync, enrichAudioAsync } from "./audio.mjs";
+import { getOrCreateRssCacheAsync } from "./cache.mjs";
 
 const BASE_URL = "https://www.blinkist.com";
 
@@ -69,6 +70,7 @@ export async function scrapeDailyBlinkAsync(language) {
 
   await appendBookToBookListAsync(bookDetails, language);
   await saveBookDetailsAsync(bookDetails);
+  await getOrCreateRssCacheAsync(bookDetails);
 
   console.log("Finished scraping", language, bookDetails.id, bookDetails.title);
 }

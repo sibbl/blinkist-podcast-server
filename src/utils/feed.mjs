@@ -2,18 +2,11 @@ import RSS from "rss";
 import {
   getBookDetailsAsync,
   getBookListEntriesAsync,
-  getBookDownloadDateAsync,
   getBookListLastModifiedDateAsync,
 } from "./storage.mjs";
-
 import { getBookAudioFinalFilePath } from "./paths.mjs";
-
-import {
-  getAudioLengthAsync,
-  getChaptersWithAudioLengthsAsync,
-} from "./audio.mjs";
-
 import { getAbsoluteUrl } from "./url.mjs";
+import { getOrCreateRssCacheAsync } from "./cache.mjs";
 
 export async function createFeedAsync(reqOrBaseUrl, language) {
   const feed = await createFeedBase(reqOrBaseUrl, language);
@@ -24,10 +17,9 @@ export async function createFeedAsync(reqOrBaseUrl, language) {
   for (let book of books) {
     const url = getAbsoluteUrl(reqOrBaseUrl, `/book/${book.id}/audio`);
     const filePath = getBookAudioFinalFilePath(book.id);
-    const duration = await getAudioLengthAsync(filePath);
-    const pubDate = await getBookDownloadDateAsync(book.id);
+    const { duration, pubDate, chapterData } = await getOrCreateRssCacheAsync(book);
+    const showNotes = getShowNotes(book, chapterData);
     const imageUrl = getAbsoluteUrl(reqOrBaseUrl, `/book/${book.id}/cover`);
-    const showNotes = await getShowNotesAsync(book);
     feed.item({
       title: book.title,
       description: book.about_the_book,
@@ -94,19 +86,18 @@ async function createFeedBase(reqOrBaseUrl, language) {
   });
 }
 
-async function getShowNotesAsync(book) {
-  const chapterList = await getChapterListHtmlAsync(book);
+function getShowNotes(book, chapterData) {
+  const chapterList = getChapterListHtml(chapterData);
   const title = `<p><strong>${book.title}</strong> - ${book.author}<br/><small>${book.subtitle}</small></p>`;
   const readLink = `<p><a href="https://www.blinkist.com/books/${book.slug}">👉 Blinkist.com</a></p>`;
   return [title, book.about_the_book, chapterList, readLink].join("");
 }
 
-async function getChapterListHtmlAsync(book) {
-  const chapters = await getChaptersWithAudioLengthsAsync(book);
+function getChapterListHtml(chapterData) {
   let items = [],
     totalSec = 0;
 
-  for (let chapter of chapters) {
+  for (let chapter of chapterData) {
     const length = chapter.length;
     var min = Math.floor(totalSec / 60);
     var sec = Math.floor(totalSec % 60);

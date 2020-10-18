@@ -13,6 +13,7 @@ import {
   getBookAudioFinalFilePath,
   getBookCoverFilePath,
 } from "./paths.mjs";
+import { getBookRssCachePath } from "./paths.mjs";
 
 const prependFileAsync = util.promisify(prependFile);
 
@@ -112,4 +113,23 @@ export async function getBookListLastModifiedDateAsync(language) {
   const filePath = getBookListFilePath(language);
   const stat = await fs.promises.stat(filePath);
   return new Date(stat.mtime);
+}
+
+export async function getBookRssCacheAsync(bookId) {
+  const filePath = getBookRssCachePath(bookId);
+  const fileContent = await fs.promises.readFile(filePath);
+  return JSON.parse(fileContent);
+}
+
+export async function saveBookRssCacheAsync(bookId, cacheData) {
+  const filePath = getBookRssCachePath(bookId);
+  await fs.promises.writeFile(
+    filePath,
+    JSON.stringify(cacheData, undefined, 4)
+  );
+  return filePath;
+}
+
+export function doesBookRssCacheExistAsync(bookId) {
+  return fileExistsAsync(getBookRssCachePath(bookId));
 }
