@@ -1,5 +1,7 @@
 export default {
   languages: ["de", "en"],
-  scraperCron: "*/15 * * * *",
+  headless: true,
+  scrapeParallel: false,
+  scraperCron: "*/60 * * * *",
   port: 8080
 };
