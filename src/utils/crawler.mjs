@@ -8,6 +8,8 @@ export default class Crawler {
     this.page = null;
     this.launchOptions = {
       headless,
+      executablePath: process.env.CHROME_BIN || null,
+      args: (process.env.PUPPETEER_ARGS || "").split(" "),
     };
     this.pageOptions = {
       waitUntil: "networkidle2",
