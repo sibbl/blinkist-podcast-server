@@ -43,29 +43,47 @@ export default class Crawler {
       return await this.page.content();
     } catch (error) {
       console.log("crawler failed to fetch " + url, error);
+      this.close();
       return null;
     }
   }
 
   async downloadJsonViaXhr(link) {
     const text = await this.downloadTextViaXhr(link);
+    if (!text) {
+      return null;
+    }
     return JSON.parse(text);
   }
 
-  async downloadTextViaXhr(link) {
-    return await this.page.evaluate((link) => {
-      return fetch(link, {
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        method: "GET",
-      }).then((r) => r.text());
-    }, link);
+  async downloadTextViaXhr(url) {
+    try {
+      return await this.page.evaluate((url) => {
+        return fetch(url, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          method: "GET",
+        }).then((r) => r.text());
+      }, url);
+    } catch (e) {
+      console.log(
+        "failed to evaluate and get text failed to fetch " + url,
+        error
+      );
+      this.close();
+      return null;
+    }
   }
 
   close() {
-    if (!this.browser) {
+    if (this.page) {
+      this.page.close();
+      this.page = null;
+    }
+    if (this.browser) {
       this.browser.close();
+      this.browser = null;
     }
   }
 }
