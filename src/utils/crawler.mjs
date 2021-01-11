@@ -18,8 +18,20 @@ export default class Crawler {
   }
 
   async start() {
+    console.log("Starting crawler... spinning up browser and page");
     puppeteerExtra.use(pluginStealth());
     this.browser = await puppeteerExtra.launch(this.launchOptions);
+    this.browser.on("disconnected", () => {
+      console.error("Browser disconnected :(");
+      const browserProcess = this.browser.process();
+      if (browserProcess) {
+        console.error("Killing browser process");
+        browserProcess.kill("SIGINT");
+      }
+      this.stop();
+      this.start();
+    });
+
     this.page = await this.browser.newPage();
     await this.page.setRequestInterception(true);
     this.page.on("request", (request) => {
@@ -78,11 +90,15 @@ export default class Crawler {
 
   close() {
     if (this.page) {
-      this.page.close();
+      try {
+        this.page.close();
+      } catch {}
       this.page = null;
     }
     if (this.browser) {
-      this.browser.close();
+      try {
+        this.browser.close();
+      } catch {}
       this.browser = null;
     }
   }
