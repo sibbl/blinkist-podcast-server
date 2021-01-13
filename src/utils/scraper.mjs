@@ -97,6 +97,7 @@ export default class Scraper {
       );
     } catch (e) {
       console.error("Failed to scrape", this.language, e);
+    } finally {
       this.crawler.close();
     }
   }
