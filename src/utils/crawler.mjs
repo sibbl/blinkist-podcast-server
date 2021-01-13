@@ -6,6 +6,7 @@ export default class Crawler {
   constructor(timeout, headless = false) {
     this.browser = null;
     this.page = null;
+    this.stopping = false;
     this.launchOptions = {
       headless,
       executablePath: process.env.CHROME_BIN || null,
@@ -22,6 +23,7 @@ export default class Crawler {
     puppeteerExtra.use(pluginStealth());
     this.browser = await puppeteerExtra.launch(this.launchOptions);
     this.browser.on("disconnected", () => {
+      if(this.stopping === true) return;
       console.error("Browser disconnected :(");
       const browserProcess = this.browser.process();
       if (browserProcess) {
@@ -89,6 +91,7 @@ export default class Crawler {
   }
 
   close() {
+    this.stopping = true;
     if (this.page) {
       try {
         this.page.close();
