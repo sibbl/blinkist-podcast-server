@@ -133,3 +133,9 @@ export async function saveBookRssCacheAsync(bookId, cacheData) {
 export function doesBookRssCacheExistAsync(bookId) {
   return fileExistsAsync(getBookRssCachePath(bookId));
 }
+
+export async function cleanTemporaryAudioFilesAsync(book) {
+  const chapterFilePaths = book.chapters.map(({id}) => getChapterAudioFilePath(book.id, id));
+  const pathsToDelete = [...chapterFilePaths, getBookAudioRawFilePath(book.id)]
+  await Promise.all(pathsToDelete.map(x => fs.promises.unlink(x)));
+}

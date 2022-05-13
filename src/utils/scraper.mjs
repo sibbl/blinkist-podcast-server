@@ -11,6 +11,7 @@ import {
   appendBookToBookListAsync,
   getBookDetailsAsync,
   saveBookCoverAsync,
+  cleanTemporaryAudioFilesAsync,
 } from "./storage.mjs";
 import { concatAudioFilesAsync, enrichAudioAsync } from "./audio.mjs";
 import { getOrCreateRssCacheAsync } from "./cache.mjs";
@@ -88,6 +89,7 @@ export default class Scraper {
       await appendBookToBookListAsync(bookDetails, this.language);
       await saveBookDetailsAsync(bookDetails);
       await getOrCreateRssCacheAsync(bookDetails);
+      await cleanTemporaryAudioFilesAsync(bookDetails);
 
       console.log(
         "Finished scraping",
