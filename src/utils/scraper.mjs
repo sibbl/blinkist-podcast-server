@@ -2,7 +2,7 @@ import axios from "axios";
 import cheerio from "cheerio";
 import {
   getBookAudioRawFilePath,
-  getBookAudioFinalFilePath,
+  getBookAudioFinalFilePath
 } from "./paths.mjs";
 import {
   doesBookExistAsync,
@@ -11,7 +11,7 @@ import {
   appendBookToBookListAsync,
   getBookDetailsAsync,
   saveBookCoverAsync,
-  cleanTemporaryAudioFilesAsync,
+  cleanTemporaryAudioFilesAsync
 } from "./storage.mjs";
 import { concatAudioFilesAsync, enrichAudioAsync } from "./audio.mjs";
 import { getOrCreateRssCacheAsync } from "./cache.mjs";
@@ -31,13 +31,11 @@ export default class Scraper {
       this.crawler = new Crawler(60000, this.headless);
       await this.crawler.start();
 
-      const overviewUrl = `${BASE_URL}/${this.language}/nc/daily/`;
-      const bookUrl = await this.getBookUrl(overviewUrl);
+      const overviewUrl = `${BASE_URL}/${this.language}/content/daily`;
+      console.log("Navigating to free daily page", overviewUrl);
+      await this.crawler.goToAndGetHtml(overviewUrl);
 
-      console.log("Getting details of", overviewUrl);
-
-      const bookId = await this.retrieveBookId(BASE_URL + bookUrl);
-
+      const bookId = await this.retrieveBookId();
       console.log("Retrieved book id", bookId);
 
       if (await doesBookExistAsync(bookId)) {
@@ -100,7 +98,7 @@ export default class Scraper {
     } catch (e) {
       console.error("Failed to scrape", this.language, e);
     } finally {
-      this.crawler.close();
+      // this.crawler.close();
     }
   }
 
@@ -109,17 +107,18 @@ export default class Scraper {
       const data = await this.crawler.goToAndGetHtml(url);
 
       const $ = cheerio.load(data);
-      return $("a.daily-book__cta").attr("href");
+      return $("a[data-test-id=view-daily-blink-button]").attr("href");
     } catch (e) {
       console.error("Failed to get", url, e);
       throw e;
     }
   }
 
-  async retrieveBookId(url) {
-    const data = await this.crawler.goToAndGetHtml(url);
-    const $ = cheerio.load(data);
-    return $("[data-book-id]").attr("data-book-id");
+  async retrieveBookId() {      
+    const freeDailyUrl = `${BASE_URL}/api/free_daily?locale=${this.language}`;
+    console.log("Getting free daily data", freeDailyUrl);
+    const freeDailyData = await this.crawler.downloadJsonViaXhr(freeDailyUrl);
+    return freeDailyData.book.id;
   }
 
   async retrieveBookDetails(id) {
@@ -140,7 +139,7 @@ export default class Scraper {
         const audioUrl = downloadData.url;
 
         const { data: audioData } = await axios.get(audioUrl, {
-          responseType: "arraybuffer",
+          responseType: "arraybuffer"
         });
 
         return await saveChapterAudioFileAsync(book.id, id, audioData);
@@ -160,7 +159,7 @@ export default class Scraper {
     }
 
     const { data } = await axios.get(url, {
-      responseType: "arraybuffer",
+      responseType: "arraybuffer"
     });
     await saveBookCoverAsync(book, data);
   }
