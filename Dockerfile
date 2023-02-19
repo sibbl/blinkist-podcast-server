@@ -1,4 +1,4 @@
-FROM mwader/static-ffmpeg:4.2.2 AS ffmpeg-binaries
+FROM mwader/static-ffmpeg:5.1.2 AS ffmpeg-binaries
 FROM node:14-alpine3.11
 COPY --from=ffmpeg-binaries /ffmpeg /ffprobe /usr/local/bin/
 ENV CHROME_BIN="/usr/bin/chromium-browser" \
