@@ -1,5 +1,5 @@
 import axios from "axios";
-import cheerio from "cheerio";
+import { load } from "cheerio";
 import {
   getBookAudioRawFilePath,
   getBookAudioFinalFilePath
@@ -106,7 +106,7 @@ export default class Scraper {
     try {
       const data = await this.crawler.goToAndGetHtml(url);
 
-      const $ = cheerio.load(data);
+      const $ = load(data);
       return $("a[data-test-id=view-daily-blink-button]").attr("href");
     } catch (e) {
       console.error("Failed to get", url, e);

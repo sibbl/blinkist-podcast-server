@@ -1,5 +1,4 @@
 import fs from "fs";
-import util from "util";
 import prependFile from "prepend-file";
 import readline from "readline";
 
@@ -14,8 +13,6 @@ import {
   getBookCoverFilePath,
 } from "./paths.mjs";
 import { getBookRssCachePath } from "./paths.mjs";
-
-const prependFileAsync = util.promisify(prependFile);
 
 async function fileExistsAsync(filePath) {
   try {
@@ -53,7 +50,7 @@ export async function getBookDetailsAsync(bookId) {
 export async function appendBookToBookListAsync(book, language) {
   await fs.promises.mkdir(getDataRootDir(), { recursive: true });
   const filePath = getBookListFilePath(language);
-  await prependFileAsync(filePath, book.id + "\r\n");
+  await prependFile(filePath, book.id + "\r\n");
 }
 
 export async function getBookListEntriesAsync(language, maxEntries = null) {
