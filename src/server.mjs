@@ -30,7 +30,7 @@ export default class Server {
       const options =
         !isNaN(page) && page > 0
           ? { page, pageSize: this.feedPageSize }
-          : {};
+          : { page: 1, pageSize: this.feedPageSize };
 
       const feedContent = await createFeedAsync(req, language, options);
       res.set("Content-Type", "application/xml");
