@@ -20,9 +20,10 @@ import Crawler from "./crawler.mjs";
 const BASE_URL = "https://www.blinkist.com";
 
 export default class Scraper {
-  constructor({ language, headless }) {
+  constructor({ language, headless, audioBitrate }) {
     this.language = language;
     this.headless = headless;
+    this.audioBitrate = audioBitrate;
   }
   async scrape() {
     console.log("Start scraping", this.language);
@@ -68,7 +69,11 @@ export default class Scraper {
         bookDetails.title
       );
       const concatAudioFilePath = getBookAudioRawFilePath(bookDetails.id);
-      await concatAudioFilesAsync(bookDetails, concatAudioFilePath);
+      await concatAudioFilesAsync(
+        bookDetails,
+        concatAudioFilePath,
+        this.audioBitrate
+      );
 
       const enrichedAudioFilePath = getBookAudioFinalFilePath(bookDetails.id);
 

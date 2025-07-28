@@ -3,10 +3,11 @@ import cron from "cron";
 import { pruneOldBooksAsync } from "./utils/storage.mjs";
 
 export default class Runner {
-  constructor({ languages, episodesToKeep = {}, scraperCron, scrapeParallel, headless }) {
+  constructor({ languages, episodesToKeep = {}, scraperCron, scrapeParallel, headless, audioBitrate }) {
     this.languages = languages;
     this.scrapeParallel = scrapeParallel;
     this.headless = headless;
+    this.audioBitrate = audioBitrate;
     this.episodesToKeep = episodesToKeep;
 
     this.cronJob = new cron.CronJob(scraperCron, () => {
@@ -31,7 +32,11 @@ export default class Runner {
   }
 
   async singleRun(language) {
-    const scraper = new Scraper({ language, headless: this.headless });
+    const scraper = new Scraper({
+      language,
+      headless: this.headless,
+      audioBitrate: this.audioBitrate,
+    });
     await scraper.scrape();
     const keep = this.episodesToKeep?.[language];
     const limit = Number.isFinite(keep) ? keep : Infinity;
