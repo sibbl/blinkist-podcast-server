@@ -8,9 +8,10 @@ import {
 } from "./utils/storage.mjs";
 
 export default class Server {
-  constructor({ port, languages }) {
+  constructor({ port, languages, feedPageSize }) {
     this.port = process.env.PORT || port;
     this.languages = languages;
+    this.feedPageSize = feedPageSize;
   }
 
   run() {
@@ -24,7 +25,14 @@ export default class Server {
       if (this.languages.indexOf(language) < 0) {
         return res.status(400).send("This language is not configured");
       }
-      const feedContent = await createFeedAsync(req, language);
+
+      const page = parseInt(req.query.page);
+      const options =
+        !isNaN(page) && page > 0
+          ? { page, pageSize: this.feedPageSize }
+          : {};
+
+      const feedContent = await createFeedAsync(req, language, options);
       res.set("Content-Type", "application/xml");
       res.send(feedContent);
     });

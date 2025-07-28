@@ -3,5 +3,6 @@ export default {
   headless: true,
   scrapeParallel: false,
   scraperCron: "*/60 * * * *",
-  port: 8080
+  port: 8080,
+  feedPageSize: 50
 };
