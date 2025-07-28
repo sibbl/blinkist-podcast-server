@@ -147,3 +147,23 @@ export async function cleanTemporaryAudioFilesAsync(book) {
   const pathsToDelete = [...chapterFilePaths, getBookAudioRawFilePath(book.id)]
   await Promise.all(pathsToDelete.map(x => fs.promises.unlink(x)));
 }
+
+export async function deleteBookAsync(bookId) {
+  await fs.promises.rm(getBookDirectory(bookId), { recursive: true, force: true });
+}
+
+export async function pruneOldBooksAsync(language, episodesToKeep) {
+  if (!Number.isFinite(episodesToKeep) || episodesToKeep <= 0) {
+    return;
+  }
+  const ids = await getBookListEntriesAsync(language);
+  if (ids.length <= episodesToKeep) {
+    return;
+  }
+  const keep = ids.slice(0, episodesToKeep);
+  const remove = ids.slice(episodesToKeep);
+  await Promise.all(remove.map((id) => deleteBookAsync(id)));
+  const filePath = getBookListFilePath(language);
+  const content = keep.length > 0 ? keep.join("\r\n") + "\r\n" : "";
+  await fs.promises.writeFile(filePath, content);
+}

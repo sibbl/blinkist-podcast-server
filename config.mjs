@@ -1,5 +1,6 @@
 export default {
   languages: ["de", "en"],
+  episodesToKeep: {},
   headless: true,
   scrapeParallel: false,
   scraperCron: "*/60 * * * *",
