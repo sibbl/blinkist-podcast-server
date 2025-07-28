@@ -26,6 +26,11 @@ By default, this will start the server on port 8080. You can then add the follow
 | German         | `http://localhost:8080/feed/de` |
 | English        | `http://localhost:8080/feed/en` |
 
+Feeds can be paged using the `page` query parameter, e.g. `?page=2` will
+return the second page with older entries. Pagination links are included in
+the feed using the [RFC&nbsp;5005](https://www.rfc-editor.org/rfc/rfc5005) link
+relations.
+
 ## Features
 
 * Every 15 minutes, the daily blink websites are checked for a new blink.

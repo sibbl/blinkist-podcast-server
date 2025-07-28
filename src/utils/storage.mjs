@@ -54,11 +54,16 @@ export async function appendBookToBookListAsync(book, language) {
 }
 
 export async function getBookListEntriesAsync(language, maxEntries = null) {
+  const { entries } = await getBookListEntriesPageAsync(language, 0, maxEntries);
+  return entries;
+}
+
+export async function getBookListEntriesPageAsync(language, offset = 0, limit = null) {
   const filePath = getBookListFilePath(language);
 
   const exists = await fileExistsAsync(filePath);
   if (!exists) {
-    return [];
+    return { entries: [], hasMore: false };
   }
 
   return await new Promise((resolve, reject) => {
@@ -67,15 +72,21 @@ export async function getBookListEntriesAsync(language, maxEntries = null) {
     });
     let lineCounter = 0;
     let result = [];
+    let hasMore = false;
+    const stopAt =
+      limit != null ? offset + limit + 1 : Infinity;
     lineReader.on("line", (line) => {
       lineCounter++;
-      result.push(line);
-      if (maxEntries != null && lineCounter == maxEntries) {
+      if (lineCounter > offset && (limit == null || result.length < limit)) {
+        result.push(line);
+      }
+      if (lineCounter >= stopAt) {
+        hasMore = true;
         lineReader.close();
       }
     });
     lineReader.on("close", () => {
-      resolve(result.filter((x) => x));
+      resolve({ entries: result.filter((x) => x), hasMore });
     });
     lineReader.on("error", (err) => {
       reject(err);
