@@ -1,11 +1,13 @@
 import Scraper from "./utils/scraper.mjs";
 import cron from "cron";
+import { pruneOldBooksAsync } from "./utils/storage.mjs";
 
 export default class Runner {
-  constructor({ languages, scraperCron, scrapeParallel, headless }) {
+  constructor({ languages, episodesToKeep = {}, scraperCron, scrapeParallel, headless }) {
     this.languages = languages;
     this.scrapeParallel = scrapeParallel;
     this.headless = headless;
+    this.episodesToKeep = episodesToKeep;
 
     this.cronJob = new cron.CronJob(scraperCron, () => {
       this.run();
@@ -31,5 +33,8 @@ export default class Runner {
   async singleRun(language) {
     const scraper = new Scraper({ language, headless: this.headless });
     await scraper.scrape();
+    const keep = this.episodesToKeep?.[language];
+    const limit = Number.isFinite(keep) ? keep : Infinity;
+    await pruneOldBooksAsync(language, limit);
   }
 }

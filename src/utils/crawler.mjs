@@ -30,8 +30,10 @@ export default class Crawler {
         console.error("Killing browser process");
         browserProcess.kill("SIGINT");
       }
-      this.stop();
-      this.start();
+      // Reset state for potential restart
+      this.browser = null;
+      this.page = null;
+      this.stopping = false;
     });
 
     this.page = await this.browser.newPage();
@@ -47,6 +49,11 @@ export default class Crawler {
         request.continue();
       }
     });
+    
+    // Add error handling for page crashes
+    this.page.on("error", (error) => {
+      console.error("Page crashed:", error);
+    });
   }
 
   async goToAndGetHtml(url) {
@@ -57,8 +64,8 @@ export default class Crawler {
       return await this.page.content();
     } catch (error) {
       console.log("crawler failed to fetch " + url, error);
-      this.close();
-      return null;
+      // Don't automatically close here - let the calling code handle cleanup
+      throw error;
     }
   }
 
@@ -83,25 +90,36 @@ export default class Crawler {
     } catch (e) {
       console.log(
         "failed to evaluate and get text failed to fetch " + url,
-        error
+        e
       );
-      this.close();
-      return null;
+      // Don't automatically close here - let the calling code handle cleanup
+      throw e;
     }
   }
 
-  close() {
+  async close() {
+    if (this.stopping) {
+      return; // Already closing or closed
+    }
+    
     this.stopping = true;
-    if (this.page) {
+    
+    // Close page first, then browser
+    if (this.page && !this.page.isClosed()) {
       try {
-        this.page.close();
-      } catch {}
+        await this.page.close();
+      } catch (error) {
+        console.warn("Error closing page:", error.message);
+      }
       this.page = null;
     }
-    if (this.browser) {
+    
+    if (this.browser?.connected) {
       try {
-        this.browser.close();
-      } catch {}
+        await this.browser.close();
+      } catch (error) {
+        console.warn("Error closing browser:", error.message);
+      }
       this.browser = null;
     }
   }

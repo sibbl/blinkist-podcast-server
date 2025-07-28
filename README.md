@@ -39,6 +39,22 @@ relations.
 
 * The audio binaries are concatenated, converted to AAC and enriched with chapter marks as well as a cover image using ffmpeg.
 
+## Configuration
+
+You can limit how many episodes are stored per language by adjusting `episodesToKeep` in `config.mjs`. By default all episodes are kept. Uncomment the sample block in `config.mjs` and change the numbers to fit your needs:
+
+```javascript
+export default {
+  languages: ["de", "en"],
+  // episodesToKeep: {
+  //   de: 30,
+  //   en: 20
+  // },
+  episodesToKeep: {},
+};
+```
+Old episodes exceeding the configured limits will be removed automatically after each scrape run.
+
 ## Remarks
 
 Please note that the usage might be illegal as you scrape data which is not yours! I'm not affiliated with any of the sites scraped or tools used here and everything you do with it is on your own risk. Again, please use this reponsibly and pay for Blinkist if you like their service ❤ thanks!
