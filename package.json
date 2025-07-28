@@ -1,6 +1,6 @@
 {
   "name": "blinkist-podcast-server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A Node.js server providing the daily blinks of blinkist.com as an audio podcast",
   "main": "index.js",
   "engines": {
