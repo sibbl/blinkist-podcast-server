@@ -43,9 +43,12 @@ relations.
 
 You can limit how many episodes are stored per language by adjusting `episodesToKeep` in `config.mjs`. By default all episodes are kept. Uncomment the sample block in `config.mjs` and change the numbers to fit your needs:
 
+You may also set `audioBitrate` to control the bitrate of the AAC files. Lower values reduce file size, e.g. `80` results in about 80&nbsp;kbit/s.
+
 ```javascript
 export default {
   languages: ["de", "en"],
+  // audioBitrate: 80, // encode using ~80 kbit/s AAC
   // episodesToKeep: {
   //   de: 30,
   //   en: 20

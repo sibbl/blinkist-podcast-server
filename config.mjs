@@ -1,5 +1,7 @@
 export default {
   languages: ["de", "en"],
+  // Uncomment the line below to adjust the AAC encoding bitrate
+  // audioBitrate: 80,
   // Uncomment the block below to limit how many episodes are kept per locale
   // episodesToKeep: {
   //   de: 30, // keep the latest 30 German episodes

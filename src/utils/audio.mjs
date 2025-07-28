@@ -47,7 +47,7 @@ export async function getChaptersWithAudioLengthsAsync(book) {
   );
 }
 
-export async function concatAudioFilesAsync(book, outFilePath) {
+export async function concatAudioFilesAsync(book, outFilePath, audioBitrate) {
   await trySetFfmpegPathsAsync();
   const chapterFilePaths = await Promise.all(
     book.chapters.map((chapter) => {
@@ -76,8 +76,13 @@ export async function concatAudioFilesAsync(book, outFilePath) {
         resolve();
       })
       .addOptions(["-movflags", "+faststart"])
-      .audioCodec("aac")
-      .mergeToFile(outFilePath);
+      .audioCodec("aac");
+
+    if (audioBitrate) {
+      proc.audioBitrate(audioBitrate);
+    }
+
+    proc.mergeToFile(outFilePath);
   });
 }
 
