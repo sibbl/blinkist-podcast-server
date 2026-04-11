@@ -22,7 +22,7 @@ export async function getOrCreateRssCacheAsync(book) {
   const [duration, pubDate, chapterData] = await Promise.all([
     getAudioLengthAsync(filePath),
     getBookDownloadDateAsync(book.id),
-    getChaptersWithAudioLengthsAsync(book),
+    getChaptersWithAudioLengthsAsync(book, filePath),
   ]);
 
   const cacheContent = { duration, pubDate, chapterData };

@@ -1,5 +1,9 @@
 import ffmpeg from "fluent-ffmpeg";
-import { getChapterAudioFilePath, getBookCoverFilePath } from "./paths.mjs";
+import {
+  getChapterAudioFilePath,
+  getBookAudioFinalFilePath,
+  getBookCoverFilePath
+} from "./paths.mjs";
 import path from "path";
 import fs from "fs";
 
@@ -31,7 +35,31 @@ export async function getAudioLengthAsync(filePath) {
   });
 }
 
-export async function getChaptersWithAudioLengthsAsync(book) {
+export async function getChaptersWithAudioLengthsAsync(book, audioFilePath = null) {
+  if (
+    book.chapters.length > 0 &&
+    book.chapters.every((chapter) => Number.isFinite(chapter.start))
+  ) {
+    const totalLength = await getAudioLengthAsync(
+      audioFilePath || getBookAudioFinalFilePath(book.id)
+    );
+    return book.chapters.map((chapter, index) => {
+      const nextChapter = book.chapters[index + 1];
+      const end = nextChapter?.start ?? totalLength;
+      return {
+        ...chapter,
+        length: Math.max(end - chapter.start, 0),
+      };
+    });
+  }
+
+  if (audioFilePath) {
+    return book.chapters.map((chapter) => ({
+      ...chapter,
+      length: null,
+    }));
+  }
+
   return Promise.all(
     book.chapters.map(async (chapter) => {
       const chapterAudioPath = await getChapterAudioFilePath(
@@ -86,10 +114,18 @@ export async function concatAudioFilesAsync(book, outFilePath, audioBitrate) {
   });
 }
 
-export async function enrichAudioAsync(inFilePath, book, outFilePath) {
+export async function enrichAudioAsync(
+  inFilePath,
+  book,
+  outFilePath,
+  audioBitrate = null
+) {
   await trySetFfmpegPathsAsync();
   const chapterMarksFilePath = path.join(process.cwd(), `temp_${book.id}.txt`);
-  const chaptersWithLengths = await getChaptersWithAudioLengthsAsync(book);
+  const chaptersWithLengths = await getChaptersWithAudioLengthsAsync(
+    book,
+    inFilePath
+  );
   const coverFilePath = await getBookCoverFilePath(book.id);
 
   let chapterMarksMetaDataStr = `;FFMETADATA1
@@ -97,11 +133,15 @@ title=${book.title}
 artist=${book.author}`;
   let lastStart = 0;
   for (let chapter of chaptersWithLengths) {
-    const end = lastStart + chapter.length;
+    if (!Number.isFinite(chapter.start) || !Number.isFinite(chapter.length)) {
+      continue;
+    }
+    const start = Number.isFinite(chapter.start) ? chapter.start : lastStart;
+    const end = start + chapter.length;
     chapterMarksMetaDataStr += `
 [CHAPTER]
 TIMEBASE=1/1000
-START=${lastStart * 1000}
+START=${start * 1000}
 END=${end * 1000}
 title=${chapter.title}`;
     lastStart = end;
@@ -111,7 +151,7 @@ title=${chapter.title}`;
 
   try {
     await new Promise((resolve, reject) => {
-      ffmpeg()
+      const proc = ffmpeg()
         .input(inFilePath)
         .input(chapterMarksFilePath)
         .input(coverFilePath)
@@ -137,13 +177,17 @@ title=${chapter.title}`;
           "1",
           "-map 0:a",
           "-map 2",
-          "-c",
-          "copy",
           "-disposition:v:0",
           "attached_pic",
-        ])
-        .output(outFilePath)
-        .run();
+        ]);
+
+      if (audioBitrate) {
+        proc.audioCodec("aac").audioBitrate(audioBitrate).videoCodec("copy");
+      } else {
+        proc.addOptions(["-c", "copy"]);
+      }
+
+      proc.output(outFilePath).run();
     });
   } finally {
     await fs.promises.unlink(chapterMarksFilePath);
