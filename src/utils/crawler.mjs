@@ -7,6 +7,7 @@ export default class Crawler {
     this.browser = null;
     this.page = null;
     this.stopping = false;
+    this.allowScripts = false;
     this.launchOptions = {
       headless,
       executablePath: process.env.CHROME_BIN || null,
@@ -39,10 +40,12 @@ export default class Crawler {
     this.page = await this.browser.newPage();
     await this.page.setRequestInterception(true);
     this.page.on("request", (request) => {
+      const blockedResourceTypes = ["image", "stylesheet", "font"];
+      if (!this.allowScripts) {
+        blockedResourceTypes.push("script");
+      }
       if (
-        ["image", "stylesheet", "font", "script"].indexOf(
-          request.resourceType()
-        ) !== -1
+        blockedResourceTypes.indexOf(request.resourceType()) !== -1
       ) {
         request.abort();
       } else {
@@ -66,6 +69,49 @@ export default class Crawler {
       console.log("crawler failed to fetch " + url, error);
       // Don't automatically close here - let the calling code handle cleanup
       throw error;
+    }
+  }
+
+  async getReaderChapterStarts(url) {
+    try {
+      const timeout = Math.min(this.pageOptions.timeout, 15000);
+      this.allowScripts = true;
+      await this.page.setUserAgent(randomUseragent.getRandom());
+      await this.page.goto(url, {
+        ...this.pageOptions,
+        timeout,
+        waitUntil: "domcontentloaded",
+      });
+      await this.page.waitForSelector('[data-test-id="chapter-start-time"]', {
+        timeout,
+      });
+      return await this.page.evaluate(() => {
+        function parseTimeToSeconds(text) {
+          const match = text.trim().match(/^(\d+):(\d{2})$/);
+          if (!match) {
+            return NaN;
+          }
+          return Number(match[1]) * 60 + Number(match[2]);
+        }
+
+        return Array.from(
+          document.querySelectorAll('[data-test-id="chapter-start-time"]')
+        )
+          .map((element) => ({
+            start: parseTimeToSeconds(element.textContent || ""),
+            title:
+              element.parentElement?.querySelector("h2")?.textContent?.trim() ||
+              "",
+          }))
+          .filter(
+            (chapter) => Number.isFinite(chapter.start) && chapter.title.length > 0
+          );
+      });
+    } catch (error) {
+      console.log("crawler failed to extract reader chapter starts " + url, error);
+      throw error;
+    } finally {
+      this.allowScripts = false;
     }
   }
 

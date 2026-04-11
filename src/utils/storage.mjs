@@ -34,6 +34,13 @@ export async function saveChapterAudioFileAsync(bookId, chapterId, audioData) {
   return filePath;
 }
 
+export async function saveBookRawAudioFileAsync(bookId, audioData) {
+  await fs.promises.mkdir(getBookDirectory(bookId), { recursive: true });
+  const filePath = getBookAudioRawFilePath(bookId);
+  await fs.promises.writeFile(filePath, audioData);
+  return filePath;
+}
+
 export async function saveBookDetailsAsync(book) {
   await fs.promises.mkdir(getBookDirectory(book.id), { recursive: true });
   const filePath = getBookDataPath(book.id);
@@ -145,7 +152,7 @@ export function doesBookRssCacheExistAsync(bookId) {
 export async function cleanTemporaryAudioFilesAsync(book) {
   const chapterFilePaths = book.chapters.map(({id}) => getChapterAudioFilePath(book.id, id));
   const pathsToDelete = [...chapterFilePaths, getBookAudioRawFilePath(book.id)]
-  await Promise.all(pathsToDelete.map(x => fs.promises.unlink(x)));
+  await Promise.all(pathsToDelete.map((x) => fs.promises.rm(x, { force: true })));
 }
 
 export async function deleteBookAsync(bookId) {

@@ -160,6 +160,10 @@ function getChapterListHtml(chapterData) {
 
   for (let chapter of chapterData) {
     const length = chapter.length;
+    if (!Number.isFinite(length)) {
+      items.push(chapter.title);
+      continue;
+    }
     var min = Math.floor(totalSec / 60);
     var sec = Math.floor(totalSec % 60);
 

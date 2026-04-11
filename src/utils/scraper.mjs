@@ -1,19 +1,18 @@
 import axios from "axios";
 import { load } from "cheerio";
 import {
-  getBookAudioRawFilePath,
   getBookAudioFinalFilePath
 } from "./paths.mjs";
 import {
   doesBookExistAsync,
-  saveChapterAudioFileAsync,
+  saveBookRawAudioFileAsync,
   saveBookDetailsAsync,
   appendBookToBookListAsync,
   getBookDetailsAsync,
   saveBookCoverAsync,
   cleanTemporaryAudioFilesAsync
 } from "./storage.mjs";
-import { concatAudioFilesAsync, enrichAudioAsync } from "./audio.mjs";
+import { enrichAudioAsync } from "./audio.mjs";
 import { getOrCreateRssCacheAsync } from "./cache.mjs";
 import Crawler from "./crawler.mjs";
 
@@ -51,54 +50,45 @@ export default class Scraper {
       }
 
       const bookDetails = await this.retrieveBookDetails(bookId);
+      const bookWithAudioMeta = await this.enrichBookWithTranscript(bookDetails);
 
       console.log(
         "Downloading...",
         this.language,
-        bookDetails.id,
-        bookDetails.title
+        bookWithAudioMeta.id,
+        bookWithAudioMeta.title
       );
 
-      await this.retrieveAndSaveCover(bookDetails);
-      await this.retrieveAndSaveAudioFiles(bookDetails);
-
-      console.log(
-        "Concatinating audio files...",
-        this.language,
-        bookDetails.id,
-        bookDetails.title
-      );
-      const concatAudioFilePath = getBookAudioRawFilePath(bookDetails.id);
-      await concatAudioFilesAsync(
-        bookDetails,
-        concatAudioFilePath,
-        this.audioBitrate
+      await this.retrieveAndSaveCover(bookWithAudioMeta);
+      const rawAudioFilePath = await this.retrieveAndSaveAudioFile(
+        bookWithAudioMeta
       );
 
-      const enrichedAudioFilePath = getBookAudioFinalFilePath(bookDetails.id);
+      const enrichedAudioFilePath = getBookAudioFinalFilePath(bookWithAudioMeta.id);
 
       console.log(
         "Adding chapter marks...",
         this.language,
-        bookDetails.id,
-        bookDetails.title
+        bookWithAudioMeta.id,
+        bookWithAudioMeta.title
       );
       await enrichAudioAsync(
-        concatAudioFilePath,
-        bookDetails,
-        enrichedAudioFilePath
+        rawAudioFilePath,
+        bookWithAudioMeta,
+        enrichedAudioFilePath,
+        this.audioBitrate
       );
 
-      await appendBookToBookListAsync(bookDetails, this.language);
-      await saveBookDetailsAsync(bookDetails);
-      await getOrCreateRssCacheAsync(bookDetails);
-      await cleanTemporaryAudioFilesAsync(bookDetails);
+      await appendBookToBookListAsync(bookWithAudioMeta, this.language);
+      await saveBookDetailsAsync(bookWithAudioMeta);
+      await getOrCreateRssCacheAsync(bookWithAudioMeta);
+      await cleanTemporaryAudioFilesAsync(bookWithAudioMeta);
 
       console.log(
         "Finished scraping",
         this.language,
-        bookDetails.id,
-        bookDetails.title
+        bookWithAudioMeta.id,
+        bookWithAudioMeta.title
       );
     } catch (e) {
       console.error("Failed to scrape", this.language, e);
@@ -130,26 +120,83 @@ export default class Scraper {
     const url = `https://api.blinkist.com/v4/books/${id}`;
 
     const data = await this.crawler.downloadJsonViaXhr(url);
-    // const { data } = await axios.get(url);
     return data.book;
   }
 
-  async retrieveAndSaveAudioFiles(book) {
-    return await Promise.all(
-      book.chapters.map(async ({ id }) => {
-        const url = `${BASE_URL}/api/books/${book.id}/chapters/${id}/audio`;
+  async enrichBookWithTranscript(book) {
+    const transcriptStarts = await this.retrieveChapterStartsFromTranscript(book);
+    if (transcriptStarts) {
+      return this.mergeChapterStarts(book, transcriptStarts);
+    }
 
-        const downloadData = await this.crawler.downloadJsonViaXhr(url);
+    const readerStarts = await this.retrieveChapterStartsFromReader(book);
+    if (readerStarts) {
+      return this.mergeChapterStarts(book, readerStarts);
+    }
 
-        const audioUrl = downloadData.url;
+    return book;
+  }
 
-        const { data: audioData } = await axios.get(audioUrl, {
-          responseType: "arraybuffer"
-        });
+  async retrieveChapterStartsFromTranscript(book) {
+    try {
+      const url = `https://api.blinkist.com/transcripts/${book.id}?language=${this.language}`;
+      const { data } = await axios.get(url);
+      const transcriptSections = data?.transcript?.transcriptSections || [];
+      const sectionStarts = transcriptSections.map((section) => section.start);
+      return this.validateChapterStarts(book, sectionStarts)
+        ? sectionStarts
+        : null;
+    } catch (error) {
+      console.warn(
+        "Failed to load transcript chapter starts",
+        this.language,
+        book.id,
+        error.message
+      );
+      return null;
+    }
+  }
 
-        return await saveChapterAudioFileAsync(book.id, id, audioData);
-      })
+  async retrieveChapterStartsFromReader(book) {
+    try {
+      const url = `${BASE_URL}/${this.language}/reader/books/${book.slug}`;
+      const readerChapters = await this.crawler.getReaderChapterStarts(url);
+      const chapterStarts = readerChapters.map((chapter) => chapter.start);
+      return this.validateChapterStarts(book, chapterStarts) ? chapterStarts : null;
+    } catch (error) {
+      console.warn(
+        "Failed to load reader chapter starts",
+        this.language,
+        book.id,
+        error.message
+      );
+      return null;
+    }
+  }
+
+  validateChapterStarts(book, chapterStarts) {
+    return (
+      chapterStarts.length === book.chapters.length &&
+      chapterStarts.every((start) => Number.isFinite(start))
     );
+  }
+
+  mergeChapterStarts(book, chapterStarts) {
+    return {
+      ...book,
+      chapters: book.chapters.map((chapter, index) => ({
+        ...chapter,
+        start: chapterStarts[index]
+      }))
+    };
+  }
+
+  async retrieveAndSaveAudioFile(book) {
+    const url = `https://api.blinkist.com/v4/audio/${book.id}.m4a?language=${this.language}`;
+    const { data } = await axios.get(url, {
+      responseType: "arraybuffer"
+    });
+    return await saveBookRawAudioFileAsync(book.id, data);
   }
 
   async retrieveAndSaveCover(book) {
