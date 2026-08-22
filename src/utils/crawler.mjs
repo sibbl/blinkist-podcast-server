@@ -27,9 +27,15 @@ export default class Crawler {
       if(this.stopping === true) return;
       console.error("Browser disconnected :(");
       const browserProcess = this.browser.process();
-      if (browserProcess) {
-        console.error("Killing browser process");
-        browserProcess.kill("SIGINT");
+      if (browserProcess?.pid) {
+        console.error("Killing browser process group");
+        try {
+          process.kill(-browserProcess.pid, "SIGKILL");
+        } catch (e) {
+          if (e.code !== "ESRCH") {
+            console.error("Failed to kill browser process group:", e);
+          }
+        }
       }
       // Reset state for potential restart
       this.browser = null;
