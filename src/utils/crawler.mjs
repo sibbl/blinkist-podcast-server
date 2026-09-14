@@ -1,6 +1,5 @@
 import puppeteerExtra from "puppeteer-extra";
 import pluginStealth from "puppeteer-extra-plugin-stealth";
-import randomUseragent from "random-useragent";
 
 export default class Crawler {
   constructor(timeout, headless = false) {
@@ -67,7 +66,6 @@ export default class Crawler {
 
   async goToAndGetHtml(url) {
     try {
-      await this.page.setUserAgent(randomUseragent.getRandom());
       await this.page.goto(url, this.pageOptions);
       await this.page.waitForFunction('document.querySelector("body")');
       return await this.page.content();
@@ -82,7 +80,6 @@ export default class Crawler {
     try {
       const timeout = Math.min(this.pageOptions.timeout, 15000);
       this.allowScripts = true;
-      await this.page.setUserAgent(randomUseragent.getRandom());
       await this.page.goto(url, {
         ...this.pageOptions,
         timeout,
@@ -131,13 +128,17 @@ export default class Crawler {
 
   async downloadTextViaXhr(url) {
     try {
-      return await this.page.evaluate((url) => {
-        return fetch(url, {
+      return await this.page.evaluate(async (url) => {
+        const response = await fetch(url, {
           headers: {
             "X-Requested-With": "XMLHttpRequest",
           },
           method: "GET",
-        }).then((r) => r.text());
+        });
+        if (!response.ok) {
+          throw new Error(`XHR fetch to ${url} failed with HTTP ${response.status}: ${response.statusText}`);
+        }
+        return await response.text();
       }, url);
     } catch (e) {
       console.log(
