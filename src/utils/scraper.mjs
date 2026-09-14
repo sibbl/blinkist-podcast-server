@@ -33,9 +33,9 @@ export default class Scraper {
 
       const overviewUrl = `${BASE_URL}/${this.language}/content/daily`;
       console.log("Navigating to free daily page", overviewUrl);
-      await this.crawler.goToAndGetHtml(overviewUrl);
+      const overviewHtml = await this.crawler.goToAndGetHtml(overviewUrl);
 
-      const bookId = await this.retrieveBookId();
+      const bookId = await this.retrieveBookId(overviewHtml);
       console.log("Retrieved book id", bookId);
 
       if (await doesBookExistAsync(bookId)) {
@@ -109,17 +109,52 @@ export default class Scraper {
     }
   }
 
-  async retrieveBookId() {      
+  async retrieveBookId(overviewHtml) {      
     const freeDailyUrl = `${BASE_URL}/api/free_daily?locale=${this.language}`;
     console.log("Getting free daily data", freeDailyUrl);
-    const freeDailyData = await this.crawler.downloadJsonViaXhr(freeDailyUrl);
-    return freeDailyData.book.id;
+    try {
+      const freeDailyData = await this.crawler.downloadJsonViaXhr(freeDailyUrl);
+      if (freeDailyData?.book?.id) {
+        return freeDailyData.book.id;
+      }
+    } catch (e) {
+      console.warn(
+        "Failed to get free daily data from API, falling back to overview HTML",
+        this.language,
+        e.message
+      );
+    }
+
+    if (overviewHtml) {
+      const matchProps = overviewHtml.match(
+        /&quot;freeDaily&quot;:\[0,\{&quot;book&quot;:\[0,\{&quot;id&quot;:\[0,&quot;([a-f0-9]+)&quot;\]/
+      );
+      if (matchProps && matchProps[1]) {
+        console.log("Retrieved book id from page props", matchProps[1]);
+        return matchProps[1];
+      }
+
+      const matchImg = overviewHtml.match(
+        /https:\/\/images\.blinkist\.io\/images\/books\/([a-f0-9]{24})\//
+      );
+      if (matchImg && matchImg[1]) {
+        console.log("Retrieved book id from cover image URL", matchImg[1]);
+        return matchImg[1];
+      }
+    }
+
+    throw new Error(`Failed to retrieve book ID for ${this.language}`);
   }
 
   async retrieveBookDetails(id) {
     const url = `https://api.blinkist.com/v4/books/${id}`;
 
     const data = await this.crawler.downloadJsonViaXhr(url);
+    if (!data?.book) {
+      throw new Error(
+        `Failed to retrieve book details for ${id}: response does not contain book`
+      );
+    }
     return data.book;
   }
 
